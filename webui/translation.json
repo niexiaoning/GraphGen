@@ -52,7 +52,13 @@
     "Output Data Format Info": "Includes various output formats such as Alpaca, Sharegpt, and ChatML.",
     "Output Data Format": "data_format(Output Data Format)",
     "Generation Config": "Generation Config",
-    "Output File": "Output File"
+    "Output File": "Output File",
+    "Synthesizer Backend": "Synthesizer API backend",
+    "Synthesizer Backend Info": "OpenAI-compatible endpoints (SiliconFlow, vLLM, etc.) or Zhipu GLM (BigModel).",
+    "Synthesizer Backend OpenAI": "OpenAI-compatible",
+    "Synthesizer Backend Zhipu": "Zhipu GLM (BigModel)",
+    "GLM Thinking JSON": "GLM thinking (optional JSON)",
+    "GLM Thinking JSON Info": "For glm-5 etc.: pass the `thinking` field, e.g. disable chain-of-thought. Only used when Zhipu is selected."
   },
   "zh": {
     "Title": "# ✨开箱即用的LLM训练数据生成框架✨\n\n",
@@ -107,6 +113,12 @@
     "Output Data Format Info": "包括 Alpaca, Sharegpt, ChatML等多种输出格式。",
     "Output Data Format": "data_format(输出数据格式)",
     "Generation Config": "生成配置",
-    "Output File": "输出文件"
+    "Output File": "输出文件",
+    "Synthesizer Backend": "合成模型后端",
+    "Synthesizer Backend Info": "OpenAI 兼容接口（硅基流动、自建 vLLM 等）或智谱 GLM（BigModel）。",
+    "Synthesizer Backend OpenAI": "OpenAI 兼容",
+    "Synthesizer Backend Zhipu": "智谱 GLM (BigModel)",
+    "GLM Thinking JSON": "GLM thinking 参数（JSON，可选）",
+    "GLM Thinking JSON Info": "如 glm-5：传入 `thinking` 字段，例如关闭思考链。仅在选择智谱时生效。"
   }
 }

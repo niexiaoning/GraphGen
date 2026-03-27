@@ -66,10 +66,14 @@ def run_graphgen(params: WebuiParams, progress=gr.Progress()):
 
     # 2. Setup Environment Variables for Ray Actors/LLM Init
     # The refactored code relies on env vars in graphgen/common/init_llm.py
-    os.environ["SYNTHESIZER_BACKEND"] = "openai_api"  # Assuming OpenAI compatible API
+    os.environ["SYNTHESIZER_BACKEND"] = params.synthesizer_backend
     os.environ["SYNTHESIZER_BASE_URL"] = params.synthesizer_url
     os.environ["SYNTHESIZER_API_KEY"] = params.api_key
     os.environ["SYNTHESIZER_MODEL"] = params.synthesizer_model
+    if params.synthesizer_backend == "zhipu_api" and params.synthesizer_thinking_json.strip():
+        os.environ["SYNTHESIZER_THINKING_JSON"] = params.synthesizer_thinking_json.strip()
+    else:
+        os.environ.pop("SYNTHESIZER_THINKING_JSON", None)
     os.environ["RPM"] = str(params.rpm)
     os.environ["TPM"] = str(params.tpm)
     os.environ["TOKENIZER_MODEL"] = params.tokenizer
@@ -282,6 +286,22 @@ with gr.Blocks(title="GraphGen Demo", theme=gr.themes.Glass(), css=css) as demo:
             tokenizer = gr.Textbox(
                 label="Tokenizer", value="cl100k_base", interactive=True
             )
+            synthesizer_backend = gr.Radio(
+                label=_("Synthesizer Backend"),
+                choices=[
+                    (_("Synthesizer Backend OpenAI"), "openai_api"),
+                    (_("Synthesizer Backend Zhipu"), "zhipu_api"),
+                ],
+                value="openai_api",
+                info=_("Synthesizer Backend Info"),
+            )
+            synthesizer_thinking_json = gr.Textbox(
+                label=_("GLM Thinking JSON"),
+                value='{"type":"disabled","clear_thinking":true}',
+                lines=2,
+                visible=False,
+                info=_("GLM Thinking JSON Info"),
+            )
             synthesizer_url = gr.Textbox(
                 label="Synthesizer URL",
                 value="https://api.siliconflow.cn/v1",
@@ -293,6 +313,31 @@ with gr.Blocks(title="GraphGen Demo", theme=gr.themes.Glass(), css=css) as demo:
                 value="Qwen/Qwen2.5-7B-Instruct",
                 info=_("Synthesizer Model Info"),
                 interactive=True,
+            )
+            synthesizer_backend.change(
+                lambda b: (
+                    gr.update(visible=(b == "zhipu_api")),
+                    gr.update(
+                        value=(
+                            "https://open.bigmodel.cn/api/paas/v4"
+                            if b == "zhipu_api"
+                            else "https://api.siliconflow.cn/v1"
+                        )
+                    ),
+                    gr.update(
+                        value=(
+                            "glm-5"
+                            if b == "zhipu_api"
+                            else "Qwen/Qwen2.5-7B-Instruct"
+                        )
+                    ),
+                ),
+                inputs=synthesizer_backend,
+                outputs=[
+                    synthesizer_thinking_json,
+                    synthesizer_url,
+                    synthesizer_model,
+                ],
             )
             trainee_url = gr.Textbox(
                 label="Trainee URL",
@@ -655,6 +700,8 @@ with gr.Blocks(title="GraphGen Demo", theme=gr.themes.Glass(), css=css) as demo:
                 if_trainee_model,
                 upload_file,
                 tokenizer,
+                synthesizer_backend,
+                synthesizer_thinking_json,
                 synthesizer_model,
                 synthesizer_url,
                 trainee_model,

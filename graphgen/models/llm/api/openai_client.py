@@ -1,3 +1,4 @@
+import json
 import math
 from typing import Any, Dict, List, Optional
 
@@ -59,9 +60,14 @@ class OpenAIClient(BaseLLMWrapper):
         self.rpm = rpm or RPM()
         self.tpm = tpm or TPM()
 
-        assert (
-            backend in ("openai_api", "azure_openai_api")
-        ), f"Unsupported backend '{backend}'. Use 'openai_api' or 'azure_openai_api'."
+        assert backend in (
+            "openai_api",
+            "azure_openai_api",
+            "zhipu_api",
+        ), (
+            f"Unsupported backend '{backend}'. Use 'openai_api', 'azure_openai_api', "
+            "or 'zhipu_api'."
+        )
         self.backend = backend
 
         self.__post_init__()
@@ -70,10 +76,11 @@ class OpenAIClient(BaseLLMWrapper):
 
         api_name = self.backend.replace("_", " ")
         assert self.api_key is not None, f"Please provide api key to access {api_name}."
-        if self.backend == "openai_api":
-            self.client = AsyncOpenAI(
-                api_key=self.api_key or "dummy", base_url=self.base_url
-            )
+        if self.backend in ("openai_api", "zhipu_api"):
+            base = self.base_url
+            if self.backend == "zhipu_api" and not base:
+                base = "https://open.bigmodel.cn/api/paas/v4"
+            self.client = AsyncOpenAI(api_key=self.api_key or "dummy", base_url=base)
         elif self.backend == "azure_openai_api":
             assert self.api_version is not None, f"Please provide api_version for {api_name}."
             assert self.base_url is not None, f"Please provide base_url for {api_name}."
@@ -84,7 +91,17 @@ class OpenAIClient(BaseLLMWrapper):
                 azure_deployment=self.model,
             )
         else:
-            raise ValueError(f"Unsupported backend {self.backend}. Use 'openai_api' or 'azure_openai_api'.")
+            raise ValueError(
+                f"Unsupported backend {self.backend}. Use 'openai_api', "
+                "'azure_openai_api', or 'zhipu_api'."
+            )
+
+        # Optional extra JSON body for OpenAI-compatible APIs (e.g. 智谱 GLM `thinking`).
+        # Env: SYNTHESIZER_THINKING_JSON / TRAINEE_THINKING_JSON via setattr from BaseLLMWrapper.
+        self._thinking_payload: Optional[Dict[str, Any]] = None
+        raw_thinking = getattr(self, "thinking_json", None)
+        if isinstance(raw_thinking, str) and raw_thinking.strip():
+            self._thinking_payload = json.loads(raw_thinking)
 
     def _pre_generate(self, text: str, history: List[str]) -> Dict:
         kwargs = {
@@ -107,6 +124,9 @@ class OpenAIClient(BaseLLMWrapper):
             messages = history + messages
 
         kwargs["messages"] = messages
+        # OpenAI SDK has strict kwargs; vendor-specific fields should go via extra_body.
+        if self._thinking_payload is not None:
+            kwargs["extra_body"] = {"thinking": self._thinking_payload}
         return kwargs
 
     @retry(

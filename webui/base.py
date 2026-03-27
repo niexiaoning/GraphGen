@@ -11,6 +11,8 @@ class WebuiParams:
     if_trainee_model: bool
     upload_file: Any  # gr.File
     tokenizer: str
+    synthesizer_backend: str
+    synthesizer_thinking_json: str
     synthesizer_model: str
     synthesizer_url: str
     trainee_model: str

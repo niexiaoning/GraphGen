@@ -23,11 +23,11 @@ class LLMServiceActor:
             from graphgen.models.llm.api.http_client import HTTPClient
 
             self.llm_instance = HTTPClient(**config)
-        elif backend in ("openai_api", "azure_openai_api"):
+        elif backend in ("openai_api", "azure_openai_api", "zhipu_api"):
             from graphgen.models.llm.api.openai_client import OpenAIClient
 
             # pass in concrete backend to the OpenAIClient so that internally we can distinguish
-            # between OpenAI and Azure OpenAI
+            # between OpenAI, Azure OpenAI, and Zhipu (智谱) OpenAI-compatible API
             self.llm_instance = OpenAIClient(**config, backend=backend)
         elif backend == "ollama_api":
             from graphgen.models.llm.api.ollama_client import OllamaClient
@@ -111,7 +111,7 @@ class LLMFactory:
     A factory class to create LLM wrapper instances based on the specified backend.
     Supported backends include:
     - http_api: HTTPClient
-    - openai_api: OpenAIClient
+    - openai_api / zhipu_api: OpenAIClient
     - ollama_api: OllamaClient
     - huggingface: HuggingFaceWrapper
     - sglang: SGLangWrapper
